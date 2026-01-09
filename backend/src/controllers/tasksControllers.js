@@ -3,9 +3,21 @@ import Task from "../models/Task.js";
 
 export const getAllTasks = async (req, res) => {
   try {
-    const tasks = await Task.find().sort({createdAt: "descending"}); // từ dưới lên, -1 hoặc "descending"
-    // throw new Error("Lỗi thử nghiệm");
-    res.status(200).json(tasks);
+    // const tasks = await Task.find().sort({ createdAt: "descending" }); // từ dưới lên, -1 hoặc "descending"
+    const result = await Task.aggregate([
+      {
+        $facet: {
+          tasks: [{ $sort: { createdAt: -1 } }],
+          activeCount: [{ $match: { status: "active" } }, { $count: "count" }],
+          completedCount: [{ $match: { status: "completed" } }, { $count: "count" }],
+        },
+      },
+    ]);
+      // throw new Error("Lỗi thử nghiệm");
+      const tasks = result[0].tasks;
+      const activeCount = result[0].activeCount[0]?.count || 0;
+      const completedCount = result[0].completedCount[0]?.count || 0;
+      res.status(200).json({tasks, activeCount, completedCount});
   } catch (error) {
     console.error("Lỗi khi lấy danh sách nhiệm vụ:", error);
     res.status(500).json({ message: "Lỗi hệ thống" });
