@@ -7,7 +7,8 @@ import TaskListPagination from "@/components/TaskListPagination";
 import Footer from "@/components/Footer";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
-import axios from "axios";
+import api from "@/lib/axios";
+
 const HomePage = () => {
   const [taskBuffer, setTaskBuffer] = useState([]);
   const [activeTaskCount, setActiveTaskCount] = useState(0);
@@ -18,7 +19,7 @@ const HomePage = () => {
   }, []);
   const fetchTasks = async () => {
     try {
-      const res = await axios.get("http://localhost:5001/api/tasks");
+      const res = await api.get("/tasks");
       setTaskBuffer(res.data.tasks);
       setActiveTaskCount(res.data.activeCount);
       setCompletedTaskCount(res.data.completedCount);
@@ -28,6 +29,10 @@ const HomePage = () => {
       toast.error("Lỗi khi truy xuất tasks");
     }
   };
+  const handleTaskChanged = () => {
+    fetchTasks();
+  };
+
   // render lại nên ko dùng cần dùng state
   const filteredTask = taskBuffer.filter((task) => {
     switch (filter) {
@@ -39,6 +44,7 @@ const HomePage = () => {
         return true;
     }
   });
+
   return (
     <div className="min-h-screen w-full relative">
       {/* Aurora Silk Fade Gradient */}
@@ -55,7 +61,7 @@ const HomePage = () => {
           <Header />
 
           {/* Tạo nhiệm vụ */}
-          <AddTask />
+          <AddTask handleNewTaskAdded={handleTaskChanged} />
 
           {/* Thống kê và bộ lọc */}
 
@@ -67,7 +73,11 @@ const HomePage = () => {
           />
 
           {/* Danh sách nhiệm vụ */}
-          <TaskList filteredTask={filteredTask} filter={filter}/>
+          <TaskList
+            filteredTask={filteredTask}
+            filter={filter}
+            handleTaskChanged={handleTaskChanged}
+          />
 
           {/* Phân trang và lọc theo Date */}
           <div className="flex flex-col items-center justify-center gap-6 sm:flex-row">
