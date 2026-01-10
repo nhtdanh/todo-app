@@ -34,7 +34,7 @@ const TaskCard = ({ task, index, handleTaskChanged }) => {
         title: updateTaskTitle,
       });
       toast.success(`Nhiệm vụ đã đổi thành ${updateTaskTitle}`);
-      handleTaskChanged;
+      handleTaskChanged();
     } catch (error) {
       console.log("Lỗi khi cập nhật task:", error);
       toast.error("Lỗi xảy ra khi cập nhật task");

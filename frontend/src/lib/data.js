@@ -23,3 +23,5 @@ export const options = [
     label: "Tất cả",
   },
 ];
+
+export const visibleTaskLimit = 4;

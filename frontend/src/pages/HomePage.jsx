@@ -8,6 +8,7 @@ import Footer from "@/components/Footer";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import api from "@/lib/axios";
+import { visibleTaskLimit } from "@/lib/data";
 
 const HomePage = () => {
   const [taskBuffer, setTaskBuffer] = useState([]);
@@ -15,9 +16,14 @@ const HomePage = () => {
   const [completedTaskCount, setCompletedTaskCount] = useState(0);
   const [filter, setFilter] = useState("all");
   const [dateQuery, setDateQuery] = useState("today");
+  const [page, setPage] = useState(1);
   useEffect(() => {
     fetchTasks();
   }, [dateQuery]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [dateQuery, filter]);
   const fetchTasks = async () => {
     try {
       const res = await api.get(`/tasks?filter=${dateQuery}`);
@@ -33,7 +39,27 @@ const HomePage = () => {
   const handleTaskChanged = () => {
     fetchTasks();
   };
+  // Chuyển filter thành active và về trang đầu
+  const handleNewTaskAdded = () => {
+    fetchTasks();
+    setFilter("active");
+    setPage(1);
+  };
+  const handleNext = () => {
+    if (page < totalPages) {
+      setPage((prev) => prev + 1);
+    }
+  };
 
+  const handlePrev = () => {
+    if (page > 1) {
+      setPage((prev) => prev - 1);
+    }
+  };
+
+  const handlePageChanged = (newPage) => {
+    setPage(newPage);
+  };
   // render lại nên ko dùng cần dùng state
   const filteredTask = taskBuffer.filter((task) => {
     switch (filter) {
@@ -45,6 +71,17 @@ const HomePage = () => {
         return true;
     }
   });
+
+  const visibleTasks = filteredTask.slice(
+    (page - 1) * visibleTaskLimit,
+    page * visibleTaskLimit
+  );
+
+  // Khi xóa hết nhiệm vụ thì quay về trang trước
+  if (visibleTasks.length === 0) {
+    handlePrev();
+  }
+  const totalPages = Math.ceil(filteredTask.length / visibleTaskLimit);
 
   return (
     <div className="min-h-screen w-full relative">
@@ -62,7 +99,7 @@ const HomePage = () => {
           <Header />
 
           {/* Tạo nhiệm vụ */}
-          <AddTask handleNewTaskAdded={handleTaskChanged} />
+          <AddTask handleNewTaskAdded={handleNewTaskAdded} />
 
           {/* Thống kê và bộ lọc */}
 
@@ -75,15 +112,21 @@ const HomePage = () => {
 
           {/* Danh sách nhiệm vụ */}
           <TaskList
-            filteredTask={filteredTask}
+            filteredTask={visibleTasks}
             filter={filter}
             handleTaskChanged={handleTaskChanged}
           />
 
           {/* Phân trang và lọc theo Date */}
           <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
-            <TaskListPagination />
-            <DateTimeFilter dateQuery={dateQuery} setDateQuery={setDateQuery}/>
+            <TaskListPagination
+              handleNext={handleNext}
+              handlePrev={handlePrev}
+              handlePageChanged={handlePageChanged}
+              page={page}
+              totalPages={totalPages}
+            />
+            <DateTimeFilter dateQuery={dateQuery} setDateQuery={setDateQuery} />
           </div>
 
           {/* Chân trang */}
